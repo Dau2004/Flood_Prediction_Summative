@@ -11,6 +11,8 @@ class InputScreen extends StatefulWidget {
 class _InputScreenState extends State<InputScreen> {
   final _formKey = GlobalKey<FormState>();
   final Map<String, int> inputValues = {};
+  // Add controllers to keep track of values
+  final Map<String, TextEditingController> _controllers = {};
   bool isLoading = false;
   String? errorMessage;
   
@@ -39,6 +41,23 @@ class _InputScreenState extends State<InputScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    // Initialize controllers for all fields with default values
+    for (var param in parameters) {
+      // Default value of 7 (middle of the range)
+      _controllers[param['name']!] = TextEditingController(text: "7");
+    }
+  }
+  
+  @override
+  void dispose() {
+    // Clean up controllers
+    _controllers.forEach((_, controller) => controller.dispose());
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -46,97 +65,91 @@ class _InputScreenState extends State<InputScreen> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                // Title
-                const Text(
-                  'Flood Risk Assessment Input',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                
-                // Form with scrolling list - this is crucial
-                Expanded(
-                  child: Form(
-                    key: _formKey,
-                    child: ListView.builder(
-                      shrinkWrap: true, // Add this line
-                      physics: const AlwaysScrollableScrollPhysics(), // Add this line
-                      itemCount: parameters.length,
-                      itemBuilder: (context, index) {
-                        final param = parameters[index];
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: TextFormField(
-                            decoration: InputDecoration(
-                              labelText: param['name'],
-                              helperText: param['description'],
-                              border: const OutlineInputBorder(),
+          ? const Center(child: CircularProgressIndicator())
+          : Form(
+              key: _formKey,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: parameters.length,
+                        itemBuilder: (context, index) {
+                          final param = parameters[index];
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: TextFormField(
+                              controller: _controllers[param['name']],  // Use the controller
+                              decoration: InputDecoration(
+                                labelText: param['name'],
+                                helperText: param['description'],
+                                border: const OutlineInputBorder(),
+                              ),
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter a value';
+                                }
+                                final number = int.tryParse(value);
+                                if (number == null) {
+                                  return 'Please enter a valid number';
+                                }
+                                if (number < 0 || number > 15) {
+                                  return 'Value must be between 0 and 15';
+                                }
+                                return null;
+                              },
+                              onSaved: (value) {
+                                inputValues[param['name']!] = int.parse(value!);
+                              },
                             ),
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter a value';
-                              }
-                              final number = int.tryParse(value);
-                              if (number == null) {
-                                return 'Please enter a valid number';
-                              }
-                              if (number < 0 || number > 15) {
-                                return 'Value must be between 0 and 15';
-                              }
-                              return null;
-                            },
-                            onSaved: (value) {
-                              if (value != null && value.isNotEmpty) {
-                                inputValues[param['name']!] = int.parse(value);
-                              }
-                            },
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                ),
-                
-                // Error message
-                if (errorMessage != null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Text(
-                      errorMessage!,
-                      style: const TextStyle(color: Colors.red),
-                      textAlign: TextAlign.center,
+                    if (errorMessage != null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text(
+                          errorMessage!,
+                          style: const TextStyle(color: Colors.red),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _submitForm,
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(50),
+                      ),
+                      child: const Text('Predict', style: TextStyle(fontSize: 18)),
                     ),
-                  ),
-                  
-                // Submit button
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: _submitForm,
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(50),
-                  ),
-                  child: const Text('Predict', style: TextStyle(fontSize: 18)),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
     );
   }
 
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
+      
+      // Make sure all fields are included by getting values directly from controllers
+      for (var param in parameters) {
+        String fieldName = param['name']!;
+        String value = _controllers[fieldName]!.text;
+        inputValues[fieldName] = int.parse(value);
+      }
+      
       setState(() {
         isLoading = true;
         errorMessage = null;
       });
 
       try {
+        print("Submitting data: ${inputValues}");  // Debug print
         final result = await ApiService.predictFlood(inputValues);
         if (!mounted) return;
         

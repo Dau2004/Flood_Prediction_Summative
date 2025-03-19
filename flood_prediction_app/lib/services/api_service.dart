@@ -6,7 +6,7 @@ class ApiService {
   // Dynamic base URL based on platform
   static String get baseUrl {
     if (kIsWeb) {
-      return 'http://localhost:8000'; // Use localhost for web
+      return 'https://flood-prediction-summative.onrender.com'; // Use localhost for web
     } else {
       return 'http://10.0.2.2:8000'; // For Android emulator
     }
@@ -14,11 +14,12 @@ class ApiService {
 
   static Future<Map<String, dynamic>> predictFlood(Map<String, int> inputData) async {
     try {
-      print('Sending request to: ${baseUrl}/predict');
+      final String apiUrl = 'https://flood-prediction-summative.onrender.com/predict';
+      print('Sending request to: $apiUrl');
       print('Request data: ${jsonEncode(inputData)}');
       
       final response = await http.post(
-        Uri.parse('${baseUrl}/predict'),
+        Uri.parse(apiUrl),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(inputData),
       );
