@@ -4,8 +4,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import uvicorn
-model_path = r'C:\Users\Hp\Downloads\LG Summative\API\models\rf_model.pkl'
-scaler_path = r'C:\Users\Hp\Downloads\LG Summative\API\models\scaler.pkl'
+model_path = 'models/rf_model.pkl'
+scaler_path = 'models/scaler.pkl'
 # Load the trained model and scaler
 model = joblib.load(model_path)
 scaler = joblib.load(scaler_path)
@@ -77,4 +77,7 @@ async def predict(input_data: PredictionInput):
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="localhost", port=8000)
+    import uvicorn
+    import os
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("app:app" , host="0.0.0.0", port=port)
