@@ -49,3 +49,7 @@ pip install -r requirements.txt
 
 # Run the API locally
 python app.py
+```
+
+### Deployment API Endpoint 
+https://flood-prediction-summative.onrender.com
