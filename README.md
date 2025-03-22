@@ -3,7 +3,7 @@
 # Link to Video
 https://youtu.be/tm3QBt2KKpg
 
-# Source of Data
+# Source of Dataset
 https://www.kaggle.com/datasets/naiyakhalid/flood-prediction-dataset
 
 ## Overview
