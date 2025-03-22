@@ -6,6 +6,9 @@ https://youtu.be/tm3QBt2KKpg
 # Source of Dataset
 https://www.kaggle.com/datasets/naiyakhalid/flood-prediction-dataset
 
+# Deployment API Endpoint 
+https://flood-prediction-summative.onrender.com
+
 ## Overview
 This project provides a comprehensive flood risk assessment and prediction system using machine learning. It consists of a FastAPI backend that serves predictions from a trained random forest model and a cross-platform Flutter application for data input and result visualization.
 
@@ -57,5 +60,4 @@ pip install -r requirements.txt
 python app.py
 ```
 
-### Deployment API Endpoint 
-https://flood-prediction-summative.onrender.com
+
